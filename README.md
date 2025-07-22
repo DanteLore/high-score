@@ -6,3 +6,5 @@ This project contains a lambda function, dynamo DB table and example javascript 
 Who knows who might find it useful.
 
 Run `./build.sh` to deploy.
+
+If you're excited to see the game in action, head to [https://dantelore.com/highscore/]
