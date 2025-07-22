@@ -9,3 +9,5 @@ terraform.tfvars
 *.pyc
 
 lambda.zip
+
+.DS_Store

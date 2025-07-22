@@ -4,25 +4,24 @@
 SRC_DIR="./lambda"
 LAMBDA_BUILD_DIR="/tmp/lambda_build"
 GAME_BUILD_DIR="/tmp/game_build"
-ZIP_NAME="lambda.zip"
+ZIP_NAME="/tmp/lambda.zip"
 TERRAFORM_DIR="./terraform"
 GAME_DIR="./game"
 AWS_S3_PATH="s3://dantelore.com/highscore"
 
 echo "➡️ Cleaning up previous build..."
 rm -rf "$LAMBDA_BUILD_DIR" "$ZIP_NAME" "$GAME_BUILD_DIR"
-mkdir -p "$LAMBDA_BUILD_DIR"
 
 echo "➡️ Creating lambda package"
-cp -r "$SRC_DIR/"* "$LAMBDA_BUILD_DIR/"
+cp -rvf "$SRC_DIR" "$LAMBDA_BUILD_DIR"
 
-if [ -f "$SRC_DIR/requirements.txt" ]; then
-  pip install --upgrade -r "$SRC_DIR/requirements.txt" -t "$LAMBDA_BUILD_DIR"
+if [ -f "requirements.txt" ]; then
+  pip3 install --upgrade -r "requirements.txt" -t "$LAMBDA_BUILD_DIR"
 fi
 
-pushd "$LAMBDA_BUILD_DIR" > /dev/null
-zip -r "../$ZIP_NAME" ./*
-popd > /dev/null
+pushd $LAMBDA_BUILD_DIR
+zip -r "$ZIP_NAME" .
+popd
 
 mv "$ZIP_NAME" "$TERRAFORM_DIR/"
 
