@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>High Score Game Demo Dante</title>
+</head>
+<body>
+
+  <h1>High Score Game Demo</h1>
+
+  <!-- Generate random score -->
+  <button id="generate-score-btn">Generate Score</button>
+  <p>Your Score: <strong><span id="score-display">N/A</span></strong></p>
+
+  <!-- Submit section (hidden until a score is generated) -->
+  <div id="submit-section" style="display:none; margin-top:1em;">
+    <input type="text" id="player-name" placeholder="Enter your name" />
+    <button id="submit-score-btn">Submit Score</button>
+    <p id="submit-status" style="color:green;"></p>
+  </div>
+
+  <hr/>
+
+  <!-- High scores list -->
+  <h2>Top 10 High Scores</h2>
+  <ul id="high-scores-list"></ul>
+
+  <script>
+    // API will be inserted by build script
+    const API_BASE = 'https://0vfwxvsy65.execute-api.eu-west-1.amazonaws.com';
+    const GAME_ID  = 'demo-game';
+
+    let currentScore = null;
+
+    // Generate a random float between 0 and 100
+    document.getElementById('generate-score-btn').addEventListener('click', () => {
+      currentScore = (Math.random() * 100).toFixed(2);
+      document.getElementById('score-display').textContent = currentScore;
+      document.getElementById('submit-section').style.display = 'block';
+      document.getElementById('submit-status').textContent = '';
+      document.getElementById('submit-status').style.color = 'green';
+    });
+
+    // Submit score to the API
+    document.getElementById('submit-score-btn').addEventListener('click', async () => {
+      const playerName = document.getElementById('player-name').value.trim();
+      if (!playerName) {
+        alert('Please enter your name.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/score`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            game_id:     GAME_ID,
+            player_name: playerName,
+            timestamp:   new Date().toISOString(),
+            score:       parseFloat(currentScore)
+          })
+        });
+        const payload = await res.json();
+
+        if (res.ok) {
+          document.getElementById('submit-status').textContent = 'Score submitted!';
+          document.getElementById('submit-status').style.color = 'green';
+          fetchHighScores();
+        } else {
+          document.getElementById('submit-status').style.color = 'red';
+          document.getElementById('submit-status').textContent = 'Error: ' + (payload.message || 'Unknown error');
+        }
+      } catch (err) {
+        document.getElementById('submit-status').style.color = 'red';
+        document.getElementById('submit-status').textContent = 'Network error';
+        console.error(err);
+      }
+    });
+
+    // Fetch and render top 10 scores
+    async function fetchHighScores() {
+      try {
+        const res = await fetch(`${API_BASE}/score/${encodeURIComponent(GAME_ID)}`);
+        const payload = await res.json();
+
+        // Normalize into an array
+        let scoresArray;
+        if (Array.isArray(payload)) {
+          // Plain array
+          scoresArray = payload;
+        } else if (payload.body) {
+          // Possible Lambda proxy wrapper
+          let bodyParsed;
+          try {
+            bodyParsed = JSON.parse(payload.body);
+          } catch (e) {
+            bodyParsed = {};
+          }
+          scoresArray = bodyParsed.scores || bodyParsed.Items || [];
+        } else {
+          // Object with scores or Items
+          scoresArray = payload.scores || payload.Items || [];
+        }
+
+        const list = document.getElementById('high-scores-list');
+        list.innerHTML = '';
+
+        scoresArray.forEach(item => {
+          const li = document.createElement('li');
+          const time = new Date(item.timestamp).toLocaleString();
+          li.textContent = `${item.player_name} — ${item.score} (${time})`;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Error fetching scores:', err);
+      }
+    }
+
+    // Initial load + refresh every 5 seconds
+    fetchHighScores();
+    setInterval(fetchHighScores, 5000);
+  </script>
+
+</body>
+</html>
