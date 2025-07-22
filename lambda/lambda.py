@@ -19,6 +19,8 @@ URL_EMAIL_PATTERN = re.compile(
 )
 # Allow alphanumeric characters and spaces
 NON_ALNUM_PATTERN = re.compile(r"[^A-Za-z0-9 ]")
+# Pre-compiled regex to strip HTML tags
+HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
 
 # Initialize profanity filter (loads default word list)
 profanity.load_censor_words()
@@ -36,12 +38,14 @@ class DecimalEncoder(json.JSONEncoder):
 
 def sanitize_name(raw_name: str, max_length: int = 20) -> str:
     """
-    Cleans up the player name by removing URLs, email addresses,
+    Cleans up the player name by removing HTML tags, URLs, email addresses,
     stripping non-alphanumeric (except spaces) characters, filtering profanity,
     and truncating to max_length.
     """
+    # Remove HTML tags
+    name = HTML_TAG_PATTERN.sub('', raw_name)
     # Remove URLs and email addresses
-    name = URL_EMAIL_PATTERN.sub('', raw_name)
+    name = URL_EMAIL_PATTERN.sub('', name)
     # Remove non-alphanumeric (except spaces) characters
     name = NON_ALNUM_PATTERN.sub('', name)
     # Trim whitespace
