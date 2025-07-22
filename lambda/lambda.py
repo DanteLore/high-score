@@ -8,7 +8,6 @@ from botocore.exceptions import ClientError
 from better_profanity import profanity
 
 # DynamoDB client/resource initialization
-
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['TABLE_NAME'])
 
@@ -37,11 +36,6 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 def sanitize_name(raw_name: str, max_length: int = 20) -> str:
-    """
-    Cleans up the player name by removing HTML tags, URLs, email addresses,
-    stripping non-alphanumeric (except spaces) characters, filtering profanity,
-    and truncating to max_length.
-    """
     # Remove HTML tags
     name = HTML_TAG_PATTERN.sub('', raw_name)
     # Remove URLs and email addresses
